@@ -3,7 +3,12 @@
     <nav-bar class="home-nav">
       <div slot="center">购物街</div>
     </nav-bar>
-    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll">
+    <scroll class="content" 
+        ref="scroll"
+        :probe-type="3"
+        @scroll="contentScroll"
+        :pullUpLoad="true"
+        @pullingUp="loadMoreData">
       <home-swiper :banners="banners"></home-swiper>
       <recommend-view :recommends="recommends"></recommend-view>
       <feature-view/>
@@ -80,6 +85,7 @@ export default {
         console.log(`getHomeGoods[${type}]: `, res)
         this.goods[type].list.push(...res.data.list)
         this.goods[type].page += 1
+        this.$refs.scroll.finishPullUp()
       })
     },
     /**
@@ -105,6 +111,9 @@ export default {
     },
     contentScroll (position) {
       this.isShowBackTop = -position.y > 1000
+    },
+    loadMoreData () {
+      this.getHomeGoods(this.currentType)
     }
   },
   computed: {

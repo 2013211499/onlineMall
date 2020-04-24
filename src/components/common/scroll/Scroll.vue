@@ -15,7 +15,10 @@ export default {
       type: Number,
       default: 0
     },
-
+    pullUpLoad: {
+      type: Boolean,
+      default: false
+    }
   },
   data () {
     return {
@@ -25,7 +28,7 @@ export default {
   mounted () {
     // 1. 创建BScroll对象
     this.scroll = new BScroll(this.$refs.scrollWrapper, {
-      pullingUpLoad: true,
+      pullUpLoad: this.pullUpLoad,
       probeType: this.probeType
     })
     // 2. 监听滚动的位置
@@ -33,10 +36,19 @@ export default {
       // console.log('position: ', position)
       this.$emit('scroll', position)
     })
+    // 3. 监听上拉事件
+    this.scroll.on('pullingUp', () => {
+      // console.log('上拉加载更多')
+      this.$emit('pullingUp')
+      this.scroll.finishPullUp()
+    })
   },
   methods: {
     scrollTo (x, y, time=300) {
       this.scroll.scrollTo(x, y, time)
+    },
+    finishPullUp () {
+      this.scroll.finishPullUp()
     }
   }
 }
