@@ -35,10 +35,9 @@ import NavBar from '@/components/common/navbar/NavBar'
 import TabControl from '@/components/content/tabControl/TabControl'
 import GoodsList from '@/components/content/goods/GoodsList'
 import Scroll from '@/components/common/scroll/Scroll'
-import BackTop from '@/components/content/backTop/BackTop'
 
 import {getHomeMultidata, getHomeGoods} from '@/network/home'
-import {debounce} from '@/common/utils'
+import {itemListenerMixin, backTopMixin} from '@/common/mixins'
 
 export default {
   name: 'Home',
@@ -49,8 +48,7 @@ export default {
     NavBar,
     TabControl,
     GoodsList,
-    Scroll,
-    BackTop
+    Scroll
   },
   data () {
     return {
@@ -62,11 +60,12 @@ export default {
         'sell': {page: 0, list: []}
       },
       currentType: 'pop',
-      isShowBackTop: false,
       tabOffsetTop: 0,
-      isFixed: false
+      isFixed: false,
+      saveY: 0
     }
   },
+  mixins: [itemListenerMixin, backTopMixin],
   created () {
     // 1. 请求多个数据
     this.getHomeMultidata()
@@ -77,14 +76,23 @@ export default {
   },
   mounted () {
     // 监听item中图片加载完成
-    const refresh = debounce(this.$refs.scroll.refresh, 1000)
-    this.$bus.$on('itemImageLoad', () => {
-      // console.log('图片加载完成')
-      refresh()
-    })
-
+    // const refresh = debounce(this.$refs.scroll.refresh, 1000)
+    // this.imageLoadListener = () => {
+    //   refresh()
+    // }
+    // this.$bus.$on('itemImageLoad',this.imageLoadListener)
     // 所有的组件都有一个属性$el: 用于获取组件的元素
     // console.log(this.$refs.tabControl.$el.offsetTop)
+  },
+  activated () {
+    this.$refs.scroll.scrollTo(0, this.saveY, 0)
+    this.$refs.scroll.refresh()
+    this.$bus.$off('itemImageLoad',this.imageLoadListener)
+  },
+  deactivated () {
+    this.saveY = this.$refs.scroll.getScrollY()
+    // 取消全局事件的监听
+    this.$bus.$off('itemImageLoad')
   },
   methods: {
     /**
@@ -125,14 +133,10 @@ export default {
       this.$refs.tabControlFixed.currentIndex = index
       this.$refs.tabControl.currentIndex = index
     },
-    backTopClick () {
-      // this.$refs.scroll.scroll.scrollTo(0, 0, 1000)
-      this.$refs.scroll.scrollTo(0, 0)
-      // console.log('click: ', this.$refs.scroll.scroll.scrollTo)
-    },
     contentScroll (position) {
       // 判断BackTop是否显示
-      this.isShowBackTop = -position.y > 1000
+      // this.isShowBackTop = -position.y > 1000
+      this.listenBackTop(position)
       // 判断tabControl是否sticky
       this.isFixed = -position.y > this.tabOffsetTop
     },
